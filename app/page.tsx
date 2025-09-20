@@ -20,11 +20,7 @@ export default function ChatPage() {
         const thread_id = localStorage.getItem("thread_id");
         url = !thread_id ? "/chat" : `/chat?thread_id=${thread_id}`;
 
-        // console.log("url used", url);
         const res = await http.get(url);
-
-        console.log("chat", res.data);
-
         if (res.status == 200) {
           !thread_id &&
             localStorage.setItem("thread_id", res.data["thread_id"]);
@@ -88,7 +84,6 @@ export default function ChatPage() {
 
       const chunk = decoder.decode(value, { stream: true });
 
-      // Split by lines because SSE format uses newlines
       chunk.split("\n").forEach((line) => {
         if (line.startsWith("data: ")) {
           const jsonStr = line.replace("data: ", "").trim();
@@ -105,7 +100,6 @@ export default function ChatPage() {
                   data: [...prev.data, response.messages?.[0]],
                 }));
               }
-              console.log("obj logged", obj);
             } catch (e) {
               console.error("Parse error:", jsonStr);
             }
@@ -115,38 +109,51 @@ export default function ChatPage() {
     }
   };
 
+  const handleClearThread = () => {
+    localStorage.removeItem("thread_id");
+    // or localStorage.clear();
+    window.location.reload();
+  };
+
   return (
     <div className="relative min-h-screen flex flex-col">
-      <div>
-        <h1 className="text-sky-600 font-semibold mx-6 my-4">Travel Agent</h1>
+      <div className="flex items-center justify-between mx-6 my-4">
+        <h1 className="text-sky-600 font-semibold">Travel Agent</h1>
+        <button
+          onClick={handleClearThread}
+          className="ml-4 px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm focus:outline-none"
+        >
+          Clear Thread
+        </button>
       </div>
       <div className="flex flex-col gap-4 px-4 pt-4 mb-48">
-        {
-        
-        !loading ? (
-          chats.data?.length > 0 ?
-          chats.data
-            .filter((msg: any) => msg.content.trim() !== "")
-            .map((msg: any, idx: number) => (
-              <div
-                key={idx}
-                className={`flex p-2 ${
-                  msg.type == "human" ? "justify-end" : "justify-center"
-                }`}
-              >
+        {!loading ? (
+          chats.data?.length > 0 ? (
+            chats.data
+              .filter((msg: any) => msg.content.trim() !== "")
+              .map((msg: any, idx: number) => (
                 <div
-                  className={`${
-                    msg.type == "human"
-                      ? "bg-gray-200 px-3 py-2 rounded-xl max-w-[80%] sm:max-w-[70%] md:max-w-[60%]"
-                      : ""
+                  key={idx}
+                  className={`flex p-2 ${
+                    msg.type == "human" ? "justify-end" : "justify-center"
                   }`}
                 >
-                  <Markdown>{msg.content}</Markdown>
+                  <div
+                    className={`${
+                      msg.type == "human"
+                        ? "bg-gray-200 px-3 py-2 rounded-xl max-w-[80%] sm:max-w-[70%] md:max-w-[60%]"
+                        : ""
+                    }`}
+                  >
+                    <Markdown>{msg.content}</Markdown>
+                  </div>
                 </div>
-              </div>
-            ))
-            :
-            <h2 className="flex justify-center h-64 items-center text-xl font-semibold">What can I help you with?</h2>
+              ))
+          ) : (
+            <h2 className="flex justify-center h-64 items-center text-xl font-semibold">
+              What can I help you with?
+            </h2>
+          )
         ) : (
           <Spinner />
         )}
@@ -156,9 +163,8 @@ export default function ChatPage() {
             className="flex gap-2 items-center font-semibold"
           >
             <Spinner custom={true} />
-            {resStage == "brain" && <div>Thinking</div>}
-            {resStage == "tools" && <div>Wait a few more seconds</div>}
-            <div></div>
+            {resStage === "brain" && <div>Thinking</div>}
+            {resStage === "tools" && <div>Wait a few more seconds</div>}
           </div>
         )}
       </div>
