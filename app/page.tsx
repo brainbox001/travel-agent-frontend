@@ -25,6 +25,7 @@ export default function ChatPage() {
           !thread_id &&
             localStorage.setItem("thread_id", res.data["thread_id"]);
           setChats(res.data);
+          console.log(res.data);
         } else {
           setChats([]);
         }
